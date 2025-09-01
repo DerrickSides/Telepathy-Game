@@ -147,7 +147,24 @@ export default function TelepathyGame() {
     const handleDeepLink = (url: string) => {
       console.log('Deep link received:', url);
       if (url) {
-        const match = url.match(/\/join\/([A-Z0-9-]+)/);
+        // Handle both old format (telepathy://join/CODE) and new Universal Links (https://domain.com/join/CODE)
+        let match: RegExpMatchArray | null = url.match(/\/join\/([A-Z0-9-]+)/);
+        
+        // If no match in path, try to extract from the full URL
+        if (!match) {
+          try {
+            const urlObj = new URL(url);
+            const pathParts = urlObj.pathname.split('/');
+            const lastPart = pathParts[pathParts.length - 1];
+            if (lastPart && lastPart !== 'index.html' && lastPart !== '') {
+              // Create a match array manually for the extracted code
+              match = [url, lastPart, lastPart];
+            }
+          } catch (e) {
+            console.log('Error parsing URL:', e);
+          }
+        }
+        
         console.log('URL match:', match);
         if (match && match[1]) {
           const gameCode = match[1];

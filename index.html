@@ -81,11 +81,20 @@
         
         if (gameCode && gameCode !== 'index.html' && gameCode !== '') {
             document.getElementById('gameCode').textContent = gameCode;
-            document.getElementById('message').textContent = 'Game Code: ' + gameCode;
+            document.getElementById('message').textContent = 'Opening Telepathy in Expo Go...';
             
-            // Show download button immediately for now
-            document.getElementById('loading').style.display = 'block';
-            document.getElementById('message').textContent = 'Click below to download Telepathy and join the game!';
+            // Try to open in Expo Go first (for testing)
+            const expoGoUrl = `exp+telepathy://join/${gameCode}`;
+            const telepathyUrl = `telepathy://join/${gameCode}`;
+            
+            // Attempt to open in Expo Go
+            window.location.href = expoGoUrl;
+            
+            // If Expo Go doesn't open, show download button after a delay
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('message').textContent = 'Click below to download Telepathy and join the game!';
+            }, 2000);
         } else {
             document.getElementById('gameCode').textContent = 'NO CODE';
             document.getElementById('message').textContent = 'Invalid game code. Please check your link.';

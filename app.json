@@ -38,6 +38,15 @@
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "your-project-id"
+      }
+    },
+    "schemes": [
+      "telepathy",
+      "exp+telepathy"
+    ]
   }
 }
