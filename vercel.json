@@ -3,11 +3,11 @@
   "routes": [
     {
       "src": "/join/(.*)",
-      "dest": "/public/index.html?code=$1"
+      "dest": "/index.html"
     },
     {
       "src": "/(.*)",
-      "dest": "/public/index.html"
+      "dest": "/index.html"
     }
   ]
 }
