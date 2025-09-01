@@ -24,7 +24,6 @@ import {
   TouchableOpacity,
   View
 } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
 import {
   initializeAds
 } from '../../utils/ads';
@@ -649,57 +648,23 @@ export default function TelepathyGame() {
   };
 
   // Sharing functionality
-  const shareGameCode = async () => {
-    if (!gameSession?.session_code) return;
-
-    const shareMessage = `🎮 Join my Telepathy game!\n\nGame Code: ${gameSession.session_code}\n\nDownload the app and enter this code to play together!`;
-
-    try {
-      await Share.share({
-        message: shareMessage,
-        title: 'Join my Telepathy game!'
-      });
-    } catch (error) {
-      console.error('Error sharing game code:', error);
-      Alert.alert('Error', 'Failed to share game code');
-    }
-  };
-
   const shareGameLink = async () => {
     if (!gameSession?.session_code) return;
 
-    // Create a deep link that opens the app with the game code
-    const deepLink = `telepathy://join/${gameSession.session_code}`;
-    const fallbackUrl = `https://your-app-website.com/join/${gameSession.session_code}`;
+    // Create a Universal Link using your Vercel domain
+    const universalLink = `https://telepathy-game-zeta.vercel.app/join/${gameSession.session_code}`;
     
-    const shareMessage = `🎮 Join my Telepathy game!\n\nClick this link to join: ${deepLink}\n\nOr enter this code in the app: ${gameSession.session_code}`;
+    const shareMessage = `🎮 Join my Telepathy game!\n\nClick this link to join: ${universalLink}\n\nOr enter this code in the app: ${gameSession.session_code}`;
 
     try {
       await Share.share({
         message: shareMessage,
-        url: fallbackUrl, // This will be used on platforms that support URL sharing
+        url: universalLink, // This will be used on platforms that support URL sharing
         title: 'Join my Telepathy game!'
       });
     } catch (error) {
       console.error('Error sharing game link:', error);
       Alert.alert('Error', 'Failed to share game link');
-    }
-  };
-
-  const shareGameResults = async () => {
-    if (!gameSession?.session_code) return;
-
-    const stats = calculateGameStats();
-    const shareMessage = `🎮 Telepathy Game Results!\n\nGame Code: ${gameSession.session_code}\nRounds Played: ${stats?.totalRounds}\nMatches: ${stats?.matches}\nSuccess Rate: ${stats?.matchRate}%\n\nPlay with me: telepathy://join/${gameSession.session_code}`;
-
-    try {
-      await Share.share({
-        message: shareMessage,
-        title: 'My Telepathy Game Results!'
-      });
-    } catch (error) {
-      console.error('Error sharing game results:', error);
-      Alert.alert('Error', 'Failed to share game results');
     }
   };
 
@@ -918,17 +883,8 @@ export default function TelepathyGame() {
             <Text style={[styles.title, styles.smallerTitle]}>Game Created!</Text>
             <Text style={styles.gameCode}>Code: {gameSession?.session_code}</Text>
             
-            <View style={styles.qrContainer}>
-              <QRCode
-                value={gameSession?.session_code || ''}
-                size={qrSize}
-                backgroundColor="white"
-                color="black"
-              />
-            </View>
-            
             <Text style={styles.instruction}>
-              Share this code or QR code with your friend to join the game
+              Share this code with your friend to join the game
             </Text>
             
             <Text style={styles.waitingText}>Waiting for player 2...</Text>
@@ -937,20 +893,13 @@ export default function TelepathyGame() {
             <View style={styles.sharingContainer}>
               <TouchableOpacity 
                 style={[styles.button, styles.shareButton]} 
-                onPress={shareGameCode}
-              >
-                <Text style={styles.buttonText}>📱 Share Code</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.button, styles.shareButton]} 
                 onPress={shareGameLink}
               >
                 <Text style={styles.buttonText}>🔗 Share Link</Text>
               </TouchableOpacity>
               
               <TouchableOpacity 
-                style={[styles.button, styles.copyButton]} 
+                style={[styles.button, styles.shareButton]} 
                 onPress={copyGameCode}
               >
                 <Text style={styles.buttonText}>📋 Copy Code</Text>
@@ -1239,12 +1188,7 @@ export default function TelepathyGame() {
               </View>
             )}
             
-            <TouchableOpacity 
-              style={[styles.button, styles.shareButton]} 
-              onPress={shareGameResults}
-            >
-              <Text style={styles.buttonText}>📊 Share Results</Text>
-            </TouchableOpacity>
+
             
             {/* Main action buttons */}
             <View style={styles.celebrationButtons}>

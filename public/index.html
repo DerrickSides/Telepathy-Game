@@ -76,23 +76,16 @@
     <script>
         // Extract game code from URL
         const urlParams = new URLSearchParams(window.location.search);
-        const gameCode = urlParams.get('code') || window.location.pathname.split('/').pop();
+        const pathParts = window.location.pathname.split('/');
+        const gameCode = urlParams.get('code') || pathParts[pathParts.length - 1];
         
-        if (gameCode && gameCode !== 'index.html') {
+        if (gameCode && gameCode !== 'index.html' && gameCode !== '') {
             document.getElementById('gameCode').textContent = gameCode;
+            document.getElementById('message').textContent = 'Game Code: ' + gameCode;
             
-            // Try to open the app
-            const appUrl = `telepathy://join/${gameCode}`;
-            const fallbackUrl = `https://apps.apple.com/app/telepathy`; // Update with your actual App Store URL
-            
-            // Attempt to open app
-            window.location.href = appUrl;
-            
-            // If app doesn't open, show download button after a delay
-            setTimeout(() => {
-                document.getElementById('loading').style.display = 'block';
-                document.getElementById('message').textContent = 'App not found. Download Telepathy to join the game!';
-            }, 2000);
+            // Show download button immediately for now
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('message').textContent = 'Click below to download Telepathy and join the game!';
         } else {
             document.getElementById('gameCode').textContent = 'NO CODE';
             document.getElementById('message').textContent = 'Invalid game code. Please check your link.';
