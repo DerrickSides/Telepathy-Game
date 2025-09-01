@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Telepathy - Join Game</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 400px;
+            width: 90%;
+        }
+        .logo {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 1rem;
+        }
+        .game-code {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #764ba2;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 2px;
+        }
+        .message {
+            color: #666;
+            margin: 1rem 0;
+            line-height: 1.6;
+        }
+        .button {
+            background: #667eea;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 0.5rem;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .button:hover {
+            background: #5a6fd8;
+        }
+        .loading {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">🧠 TELEPATHY</div>
+        <div id="gameCode" class="game-code">...</div>
+        <div id="message" class="message">Opening your Telepathy app...</div>
+        <div id="loading" class="loading">
+            <div class="button" onclick="openAppStore()">Download Telepathy</div>
+        </div>
+    </div>
+
+    <script>
+        // Extract game code from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const gameCode = urlParams.get('code') || window.location.pathname.split('/').pop();
+        
+        if (gameCode && gameCode !== 'index.html') {
+            document.getElementById('gameCode').textContent = gameCode;
+            
+            // Try to open the app
+            const appUrl = `telepathy://join/${gameCode}`;
+            const fallbackUrl = `https://apps.apple.com/app/telepathy`; // Update with your actual App Store URL
+            
+            // Attempt to open app
+            window.location.href = appUrl;
+            
+            // If app doesn't open, show download button after a delay
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'block';
+                document.getElementById('message').textContent = 'App not found. Download Telepathy to join the game!';
+            }, 2000);
+        } else {
+            document.getElementById('gameCode').textContent = 'NO CODE';
+            document.getElementById('message').textContent = 'Invalid game code. Please check your link.';
+        }
+        
+        function openAppStore() {
+            // Detect platform and redirect to appropriate store
+            if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+                window.location.href = 'https://apps.apple.com/app/telepathy'; // Update with your actual App Store URL
+            } else {
+                window.location.href = 'https://play.google.com/store/apps/details?id=com.yourapp.telepathy'; // Update with your actual Play Store URL
+            }
+        }
+    </script>
+</body>
+</html>
