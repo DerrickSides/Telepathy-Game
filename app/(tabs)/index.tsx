@@ -668,15 +668,17 @@ export default function TelepathyGame() {
   const shareGameLink = async () => {
     if (!gameSession?.session_code) return;
 
-    // Create a Universal Link using your Vercel domain
+    // For development testing, use custom scheme instead of Universal Links
+    // TODO: Change back to Universal Links when building for production
+    const customSchemeLink = `telepathy://join/${gameSession.session_code}`;
     const universalLink = `https://telepathy-game-zeta.vercel.app/join/${gameSession.session_code}`;
     
-    const shareMessage = `🎮 Join my Telepathy game!\n\nClick this link to join: ${universalLink}\n\nOr enter this code in the app: ${gameSession.session_code}`;
+    const shareMessage = `🎮 Join my Telepathy game!\n\nClick this link to join: ${customSchemeLink}\n\nOr visit: ${universalLink}\n\nOr enter this code in the app: ${gameSession.session_code}`;
 
     try {
       await Share.share({
         message: shareMessage,
-        url: universalLink, // This will be used on platforms that support URL sharing
+        url: customSchemeLink, // Use custom scheme for development testing
         title: 'Join my Telepathy game!'
       });
     } catch (error) {
