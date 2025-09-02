@@ -902,26 +902,26 @@ export default function TelepathyGame() {
             <Text style={[styles.title, styles.smallerTitle]}>Game Created!</Text>
             <Text style={styles.gameCode}>Code: {gameSession?.session_code}</Text>
             
-            <Text style={styles.instruction}>
-              Share this code with your friend to join the game
+            <Text style={[styles.instruction, { marginTop: 15 }]}>
+              Share this code with a friend so they can join the game.
             </Text>
             
-            <Text style={styles.waitingText}>Waiting for player 2...</Text>
+            <Text style={styles.waitingText}>Waiting to begin...</Text>
             
             {/* Sharing buttons */}
             <View style={styles.sharingContainer}>
               <TouchableOpacity 
                 style={[styles.button, styles.shareButton]} 
-                onPress={shareGameLink}
-              >
-                <Text style={styles.buttonText}>🔗 Share Link</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.button, styles.shareButton]} 
                 onPress={copyGameCode}
               >
                 <Text style={styles.buttonText}>📋 Copy Code</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.button, { backgroundColor: 'rgba(255, 255, 255, 0.1)' }]} 
+                onPress={shareGameLink}
+              >
+                <Text style={styles.buttonText}>🔗 Share Link</Text>
               </TouchableOpacity>
             </View>
             
@@ -1538,7 +1538,7 @@ const styles = StyleSheet.create({
   },
   waitingText: {
     fontSize: 18,
-    color: '#ffd700',
+    color: '#CCC',
     marginVertical: 15,
     textAlign: 'center',
   },
