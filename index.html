@@ -87,26 +87,47 @@
             const expoGoUrl = `exp+telepathy://join/${gameCode}`;
             const telepathyUrl = `telepathy://join/${gameCode}`;
             
-            // Create a hidden iframe to trigger the deep link without redirecting the page
-            const iframe = document.createElement('iframe');
-            iframe.style.display = 'none';
-            iframe.src = expoGoUrl;
-            document.body.appendChild(iframe);
-            
-            // Also try using window.open as a fallback
-            try {
-                window.open(expoGoUrl, '_blank');
-            } catch (e) {
-                console.log('Window.open failed:', e);
-            }
-            
-            // Try direct location change as another method
-            setTimeout(() => {
+            // Function to attempt opening the app
+            function openApp() {
+                // Method 1: Try using window.location.href directly
                 try {
                     window.location.href = expoGoUrl;
                 } catch (e) {
-                    console.log('Location change failed:', e);
+                    console.log('Direct location change failed:', e);
                 }
+            }
+            
+            // Method 2: Try using window.open
+            function openAppWindow() {
+                try {
+                    const newWindow = window.open(expoGoUrl, '_blank');
+                    if (newWindow) {
+                        newWindow.focus();
+                    }
+                } catch (e) {
+                    console.log('Window.open failed:', e);
+                }
+            }
+            
+            // Method 3: Create a clickable link and trigger it
+            function openAppLink() {
+                const link = document.createElement('a');
+                link.href = expoGoUrl;
+                link.style.display = 'none';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+            
+            // Try all methods with delays
+            openApp();
+            
+            setTimeout(() => {
+                openAppWindow();
+            }, 500);
+            
+            setTimeout(() => {
+                openAppLink();
             }, 1000);
             
             // Check if the app opened by trying to detect if we're still on the page
