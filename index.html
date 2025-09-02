@@ -87,14 +87,45 @@
             const expoGoUrl = `exp+telepathy://join/${gameCode}`;
             const telepathyUrl = `telepathy://join/${gameCode}`;
             
-            // Attempt to open in Expo Go
-            window.location.href = expoGoUrl;
+            // Create a hidden iframe to trigger the deep link without redirecting the page
+            const iframe = document.createElement('iframe');
+            iframe.style.display = 'none';
+            iframe.src = expoGoUrl;
+            document.body.appendChild(iframe);
+            
+            // Also try using window.open as a fallback
+            try {
+                window.open(expoGoUrl, '_blank');
+            } catch (e) {
+                console.log('Window.open failed:', e);
+            }
+            
+            // Try direct location change as another method
+            setTimeout(() => {
+                try {
+                    window.location.href = expoGoUrl;
+                } catch (e) {
+                    console.log('Location change failed:', e);
+                }
+            }, 1000);
+            
+            // Check if the app opened by trying to detect if we're still on the page
+            let appOpened = false;
+            
+            // Try to detect if the app opened by checking if the page becomes hidden
+            document.addEventListener('visibilitychange', () => {
+                if (document.hidden) {
+                    appOpened = true;
+                }
+            });
             
             // If Expo Go doesn't open, show download button after a delay
             setTimeout(() => {
-                document.getElementById('loading').style.display = 'block';
-                document.getElementById('message').textContent = 'Click below to download Telepathy and join the game!';
-            }, 2000);
+                if (!appOpened) {
+                    document.getElementById('loading').style.display = 'block';
+                    document.getElementById('message').textContent = 'Click below to download Telepathy and join the game!';
+                }
+            }, 3000);
         } else {
             document.getElementById('gameCode').textContent = 'NO CODE';
             document.getElementById('message').textContent = 'Invalid game code. Please check your link.';
