@@ -14,7 +14,9 @@ import {
   Animated,
   Dimensions,
   Keyboard,
+  KeyboardAvoidingView,
   Linking,
+  Platform,
   SafeAreaView,
   ScrollView,
   Share,
@@ -135,9 +137,15 @@ export default function TelepathyGame() {
   // Game statistics
   const [showStats, setShowStats] = useState(false);
   
+  // Keyboard state
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  
   // Real-time listener refs
   const gameListenerRef = useRef<any>(null);
   const countdownRef = useRef<number | null>(null);
+  const gameScrollViewRef = useRef<ScrollView>(null);
+  const usernameScrollViewRef = useRef<ScrollView>(null);
+  const joinGameScrollViewRef = useRef<ScrollView>(null);
 
   useEffect(() => {
     initializeUser();
@@ -248,6 +256,31 @@ export default function TelepathyGame() {
 
     return () => subscription?.remove();
   }, []);
+
+  // Listen for keyboard events
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener('keyboardDidShow', () => {
+      setKeyboardVisible(true);
+      // Scroll to input when keyboard appears based on current game state
+      setTimeout(() => {
+        if (gameState === 'playing' && gameScrollViewRef.current) {
+          gameScrollViewRef.current?.scrollToEnd({ animated: true });
+        } else if (gameState === 'username' && usernameScrollViewRef.current) {
+          usernameScrollViewRef.current?.scrollToEnd({ animated: true });
+        } else if (gameState === 'join' && joinGameScrollViewRef.current) {
+          joinGameScrollViewRef.current?.scrollToEnd({ animated: true });
+        }
+      }, 100);
+    });
+    const keyboardDidHideListener = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardVisible(false);
+    });
+
+    return () => {
+      keyboardDidShowListener?.remove();
+      keyboardDidHideListener?.remove();
+    };
+  }, [gameState]);
 
   // Handle game state transitions based on game session updates
   useEffect(() => {
@@ -823,46 +856,69 @@ export default function TelepathyGame() {
   );
 
   const renderUsernameScreen = () => (
-    <View style={styles.container}>
-      <View style={styles.centerContent}>
-        <Text style={styles.usernameTitle}>Enter Your Name</Text>
-        {joinCode && (
-          <Text style={styles.subtitle}>Joining game: {joinCode}</Text>
-        )}
-        <TextInput
-          style={styles.input}
-          value={username}
-          onChangeText={setUsername}
-          placeholder="Your username"
-          placeholderTextColor="#666"
-        />
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handleUsernameSubmit}
-        >
-          <Text style={styles.buttonText}>
-            {joinCode ? 'Join Game' : 'Continue'}
-          </Text>
-        </TouchableOpacity>
-        
-        {/* Back Button - Centered under Continue button */}
-        <TouchableOpacity 
-          style={styles.backButtonCentered} 
-          onPress={() => {
-            try {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              playButtonSound();
-              setGameState('title');
-            } catch (error) {
-              console.log('Error in back button press:', error);
-              setGameState('title');
-            }
-          }}
-        >
-          <Text style={styles.backButtonText}>← Back</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <KeyboardAvoidingView 
+      style={styles.keyboardAwareContainer} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <ScrollView
+        ref={usernameScrollViewRef}
+        contentContainerStyle={keyboardVisible ? styles.scrollContainerWithKeyboard : styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      >
+        <View style={keyboardVisible ? styles.centerContentWithKeyboard : styles.centerContent}>
+          <Text style={styles.usernameTitle}>Enter Your Name</Text>
+          {joinCode && (
+            <Text style={styles.subtitle}>Joining game: {joinCode}</Text>
+          )}
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={username}
+              onChangeText={setUsername}
+              placeholder="Your username"
+              placeholderTextColor="#666"
+              onFocus={() => {
+                // Scroll to input when focused
+                if (usernameScrollViewRef.current) {
+                  setTimeout(() => {
+                    usernameScrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 100);
+                }
+              }}
+            />
+          </View>
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={handleUsernameSubmit}
+          >
+            <Text style={styles.buttonText}>
+              {joinCode ? 'Join Game' : 'Continue'}
+            </Text>
+          </TouchableOpacity>
+          
+          {/* Back Button - Centered under Continue button */}
+          <TouchableOpacity 
+            style={styles.backButtonCentered} 
+            onPress={() => {
+              try {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                playButtonSound();
+                setGameState('title');
+              } catch (error) {
+                console.log('Error in back button press:', error);
+                setGameState('title');
+              }
+            }}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 
   const renderModeSelection = () => (
@@ -938,35 +994,58 @@ export default function TelepathyGame() {
   };
 
   const renderJoinGame = () => (
-    <View style={styles.container}>
-      <View style={styles.centerContent}>
-        <Text style={styles.title}>Join Game</Text>
-        <Text style={styles.subtitle}>Enter the game code</Text>
-        
-        <TextInput
-          style={styles.input}
-          value={joinCode}
-          onChangeText={setJoinCode}
-          placeholder="Enter game code (TELE-XXXXXX)"
-          placeholderTextColor="#666"
-          autoCapitalize="characters"
-        />
-        
-        <TouchableOpacity 
-          style={styles.button} 
-          onPress={handleJoinGame}
-        >
-          <Text style={styles.buttonText}>Join Game</Text>
-        </TouchableOpacity>
-        
-        <TouchableOpacity 
-          style={[styles.button, styles.secondaryButton]} 
-          onPress={() => setGameState('mode')}
-        >
-          <Text style={styles.buttonText}>Back</Text>
-        </TouchableOpacity>
-      </View>
-    </View>
+    <KeyboardAvoidingView 
+      style={styles.keyboardAwareContainer} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <ScrollView
+        ref={joinGameScrollViewRef}
+        contentContainerStyle={keyboardVisible ? styles.scrollContainerWithKeyboard : styles.scrollContainer}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="interactive"
+        automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
+      >
+        <View style={keyboardVisible ? styles.centerContentWithKeyboard : styles.centerContent}>
+          <Text style={styles.smallerTitle}>Join Game</Text>
+          <Text style={styles.subtitle}>Enter the game code</Text>
+          
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.input}
+              value={joinCode}
+              onChangeText={setJoinCode}
+              placeholder="Enter game code (TELE-XXXXXX)"
+              placeholderTextColor="#666"
+              autoCapitalize="characters"
+              onFocus={() => {
+                // Scroll to input when focused
+                if (joinGameScrollViewRef.current) {
+                  setTimeout(() => {
+                    joinGameScrollViewRef.current?.scrollToEnd({ animated: true });
+                  }, 100);
+                }
+              }}
+            />
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.button} 
+            onPress={handleJoinGame}
+          >
+            <Text style={styles.buttonText}>Join Game</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.button, styles.secondaryButton]} 
+            onPress={() => setGameState('mode')}
+          >
+            <Text style={styles.buttonText}>Back</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 
   const renderCountdown = () => (
@@ -984,7 +1063,11 @@ export default function TelepathyGame() {
     const otherUsername = isPlayer1 ? gameSession?.player2_username : gameSession?.player1_username;
   
     return (
-      <View style={styles.container}>
+      <KeyboardAvoidingView 
+        style={styles.keyboardAwareContainer} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+      >
         <View style={styles.header}>
           <Text style={styles.gameCode}>Game: {gameSession?.session_code}</Text>
           <Text style={styles.roundText}>Round {gameSession?.round_number || 1}</Text>
@@ -992,10 +1075,14 @@ export default function TelepathyGame() {
         </View>
   
         <ScrollView 
-          contentContainerStyle={styles.scrollContainer}
+          ref={gameScrollViewRef}
+          contentContainerStyle={keyboardVisible ? styles.scrollContainerWithKeyboard : styles.scrollContainer}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
         >
-          <View style={styles.gamePlayContent}>
+          <View style={keyboardVisible ? styles.gamePlayContentWithKeyboard : styles.gamePlayContent}>
             {/* Word History - Moved to top */}
             {gameSession?.word_history && gameSession.word_history.length > 0 && (
               <View style={styles.historyContainer}>
@@ -1034,22 +1121,32 @@ export default function TelepathyGame() {
                   Think and enter a word{'\n'}
                 </Text>
   
-                <TextInput
-                  style={styles.wordInput}
-                  value={currentWord}
-                  onChangeText={(text) => {
-                    setCurrentWord(text);
-                    // Start timing when user starts typing
-                    if (!wordSubmissionTime) {
-                      setWordSubmissionTime(Date.now());
-                    }
-                  }}
-                  placeholder="Enter your word..."
-                  placeholderTextColor="#666"
-                  onSubmitEditing={handleWordSubmit}
-                  returnKeyType="done"
-                  blurOnSubmit={false}
-                />
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.wordInput}
+                    value={currentWord}
+                    onChangeText={(text) => {
+                      setCurrentWord(text);
+                      // Start timing when user starts typing
+                      if (!wordSubmissionTime) {
+                        setWordSubmissionTime(Date.now());
+                      }
+                    }}
+                    placeholder="Enter your word..."
+                    placeholderTextColor="#666"
+                    onSubmitEditing={handleWordSubmit}
+                    returnKeyType="done"
+                    blurOnSubmit={false}
+                    onFocus={() => {
+                      // Scroll to input when focused
+                      if (gameScrollViewRef.current) {
+                        setTimeout(() => {
+                          gameScrollViewRef.current?.scrollToEnd({ animated: true });
+                        }, 100);
+                      }
+                    }}
+                  />
+                </View>
                 
                 {/* Keyboard dismiss button */}
                 <TouchableOpacity 
@@ -1085,7 +1182,7 @@ export default function TelepathyGame() {
             </TouchableOpacity>
           </View>
         </ScrollView>
-      </View>
+      </KeyboardAvoidingView>
     );
   };
 
@@ -1359,6 +1456,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20, // Add horizontal padding
     width: '100%', // Ensure full width
   },
+  centerContentWithKeyboard: {
+    flex: 1,
+    justifyContent: 'flex-start', // Change to flex-start when keyboard is visible
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    paddingHorizontal: 20,
+    width: '100%',
+    paddingTop: 60, // Add more top padding when keyboard is visible
+  },
   gradientBackground: {
     position: 'absolute',
     top: 0,
@@ -1446,6 +1552,11 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#3a3a6a',
   },
+  inputContainer: {
+    width: '100%',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   wordInput: {
     width: '100%',
     maxWidth: 300,
@@ -1459,6 +1570,8 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#4a4a8a',
     textAlign: 'center',
+    // Ensure input is always visible above keyboard
+    zIndex: 1000,
   },
   button: {
     backgroundColor: '#6c5ce7',
@@ -1636,13 +1749,30 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     minHeight: '100%',
   },
-  createGameContainer: {
+  scrollContainerWithKeyboard: {
+    flexGrow: 1,
+    justifyContent: 'flex-start',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    minHeight: '100%',
+    paddingTop: 40, // Add extra top padding when keyboard is visible
+  },
+  gamePlayContent: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 20,
+    paddingBottom: 40, // Add extra bottom padding for keyboard
   },
-  gamePlayContent: {
+  gamePlayContentWithKeyboard: {
+    flex: 1,
+    justifyContent: 'flex-start', // Change to flex-start when keyboard is visible
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingBottom: 40,
+    paddingTop: 60, // Add more top padding when keyboard is visible
+  },
+  createGameContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1819,6 +1949,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  keyboardAwareContainer: {
+    flex: 1,
+    backgroundColor: '#0f172a',
   },
   
   // Advanced scoring styles
